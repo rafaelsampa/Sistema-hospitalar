@@ -1,0 +1,151 @@
+from elasticsearch import Elasticsearch
+from elasticsearch import helpers
+
+ELASTIC_PASSWORD = 'vl60PBF8o1qbViYLeAHe'
+CERT_FINGERPRINT = 'b068992808ddea6d4b1c084bcff5142eb52565cf393084b5519bec14b07c66bc'
+
+es = Elasticsearch(
+        ['https://localhost:9200/'],
+        basic_auth=('elastic', ELASTIC_PASSWORD),
+        ssl_assert_fingerprint=CERT_FINGERPRINT, 
+        verify_certs=True  
+    )
+
+if es.ping():
+    print("Connected to secured Elasticsearch.")
+else:
+    print("Failed to connect to secured Elasticsearch.")
+
+
+index_name = "farmacoteste"
+
+if es.indices.exists(index=index_name):
+    print(f"Index '{index_name}' exists.")
+else:
+    print(f"Index '{index_name}' does not exist.")
+
+
+def enterPraContinuar():
+    print("\n>>> Aperte enter pra continuar.")
+    input()
+    return
+
+def adicionarMedicamento():
+    print("Digite o nome do medicamento a ser registrado:")
+    resp = input()
+
+    document = {"nome": resp, "quantidade": "0"}
+    try:
+        es.index(index=index_name, document=document)
+        print("Medicamento adicionado com sucesso.")
+        enterPraContinuar()
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        enterPraContinuar()
+
+def atualizarQuantidade(stringID):
+    print("Digite a nova quantidade do medicamento:")
+    resp = input()
+    try:
+        es.update(index=index_name, id=stringID, body={"doc": {"quantidade": resp}})
+        print("quantidade atualizada com sucesso.")
+        enterPraContinuar()
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        enterPraContinuar()
+
+    return
+
+def consultarMedicamento(stringID):
+    try:
+        doc = es.get(index=index_name, id=stringID)
+        print("-" * 30)
+        print(f"Nome do medicamento: {doc['_source']['nome']}")
+        print(f"Quantidade disponivel: {doc['_source']['quantidade']}")
+        while True:
+            print("O que voce quer fazer com esse medicamento?\n1- atualizar quantidade\n0- voltar")
+            resp = input()
+            if resp == '1': atualizarQuantidade(stringID)
+            if resp == '0': break
+
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+        enterPraContinuar()
+    return
+
+def mostrarTodos():
+    query = {
+    "query": { 
+        "match_all": {}
+    }
+    }
+
+    contador = 1
+    print("-" * 30)
+    try:
+        for doc in helpers.scan(es, query=query, index=index_name):
+            print(contador,":")
+            print(f"ID: {doc['_id']}")
+            print(doc['_source']['nome'])
+            print(doc['_source']['quantidade'])
+            print("-" * 30)
+            contador += 1
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    enterPraContinuar()
+    return
+
+def pesquisa():
+    listaIDs = []
+    print("Digite o nome do medicamento que quer procurar")
+    alvo = input()
+    contador = 1
+    query = {
+    "query": {
+        "wildcard": {
+            "nome": {
+                "value": "*"+alvo+"*",
+                "boost": 1.0,
+                "rewrite": "constant_score"
+            }
+        }
+    }
+}
+    
+    try:
+        for doc in helpers.scan(es, query=query, index=index_name):
+            listaIDs.append(doc['_id'])
+            print(contador,":")
+            print(doc['_source']['nome'])
+            print(doc['_source']['quantidade'])
+            print("-" * 30)
+            contador += contador
+
+    except Exception as e:
+        print(f"An error occurred: {e}")
+
+    if contador == 1:
+        print("nenhum registro encontrado."); return
+
+
+    while True:
+        print("Escolha qual medicamento voce quer acessar, ou digite 0 para voltar")
+        resp = input()
+        if resp == '0': break
+        if int(resp) <= contador: consultarMedicamento(listaIDs[int(resp)-1]); return
+
+    return
+
+
+while True:
+    print("Bem vindo. que voce quer fazer agora?\n1- mostrar todos os medicamentos registrados\n2- pesquisar e consultar medicamentos por nome\n3- adicionar novo medicamento\n0- sair")
+    resp = input()
+    if resp == '1': mostrarTodos(); 
+    if resp == '2': pesquisa(); 
+    if resp == '3': adicionarMedicamento(); 
+    if resp == '0': break
+
