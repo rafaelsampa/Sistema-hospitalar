@@ -1,0 +1,6 @@
+flask==3.0.0
+gunicorn==21.2.0        # Para rodar o Flask (da Prática 6)
+kafka-python==2.0.2   # Para falar com o Kafka (do doc da turma)
+SQLAlchemy==2.0.31      # Para falar com o Postgres (da Prática 6)
+psycopg2-binary         # O "driver" do Postgres para SQLAlchemy
+elasticsearch==8.11.1 # Para falar com o Elastic

@@ -1,0 +1,77 @@
+# /Sistema-hospitalar/docker-compose.yml
+# Inspirado no 'micro-e2e/docker-compose.yml'
+version: "3.9"
+
+services:
+  # --- 1. O "Carteiro" (Kafka) ---
+  # Requisito do Padrao_Comunicacao_Kafka.docx
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: 'zookeeper:2181'
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+
+  # --- 2. Seus Bancos de Dados ---
+  # Requisito do Projeto.pdf (Item 4b)
+  postgres:
+    image: postgres:16
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin
+      POSTGRES_DB: pharmacy_db
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admin -d pharmacy_db"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  elasticsearch:
+    image: elasticsearch:8.11.1
+    ports:
+      - "9200:9200"
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+
+  # --- 3. O Seu Serviço (Flask API) ---
+  # Inspirado na Pratica 4 e Pratica 6
+  pharmacy-svc:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      BROKER_URL: "kafka:9092"
+      DATABASE_URL: "postgresql://admin:admin@postgres:5432/pharmacy_db"
+      ELASTIC_URL: "http://elasticsearch:9200"
+    volumes:
+      - .:/app 
+    depends_on:
+      kafka:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_started # Adicionado para garantir que o Elastic inicie
+    restart: on-failure
+
+volumes:
+  postgres_data:
+  es_data:
