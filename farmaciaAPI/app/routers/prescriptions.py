@@ -42,7 +42,7 @@ def create_prescription(
             prescription_id=db_prescription.id,
             medication_id=item.medication_id,
             dose=item.dose,
-            frequency=item.frequency,
+            frequency="1234567",
             route=item.route,
             duration=item.duration,
             instructions=item.instructions,

@@ -3,6 +3,7 @@ from fastapi import FastAPI
 
 from .database import Base, engine
 from .routers import medications, prescriptions, dispensations
+from . import es_client # NOVO: Importa o cliente ES para forçar a inicialização
 
 Base.metadata.create_all(bind=engine)
 
@@ -15,7 +16,9 @@ app = FastAPI(
 
 @app.get("/health", tags=["health"])
 def health_check():
-    return {"status": "ok"}
+    # NOVO: Verifica também a saúde do ES
+    es_status = "ok" if es_client.es and es_client.es.ping() else "error"
+    return {"status": "ok", "database": "ok", "elasticsearch": es_status}
 
 
 app.include_router(medications.router)
