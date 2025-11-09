@@ -1,0 +1,18 @@
+version: "3.9"
+
+services:
+  db:
+    image: postgres:16
+    container_name: postgres-farmacia
+    restart: always
+    environment:
+      POSTGRES_USER: farmacia_user
+      POSTGRES_PASSWORD: senha_forte
+      POSTGRES_DB: farmacia_prescricao
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata_farmacia:/var/lib/postgresql/data
+
+volumes:
+  pgdata_farmacia:
