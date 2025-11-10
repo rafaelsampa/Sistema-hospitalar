@@ -6,7 +6,7 @@
 set -e
 
 echo "=========================================="
-echo "🚀 Deploy - Microserviço Farmácia & Prescrição"
+echo " Deploy - Microserviço Farmácia & Prescrição"
 echo "=========================================="
 
 # Cores para output
@@ -109,19 +109,19 @@ docker-compose logs --tail=20 api
 
 echo ""
 echo "=========================================="
-log_info "🎉 Deploy concluído com sucesso!"
+log_info "Deploy concluído com sucesso!"
 echo "=========================================="
 echo ""
-echo "📋 Serviços disponíveis:"
+echo " Serviços disponíveis:"
 echo "   • API:            http://localhost:8000"
 echo "   • API Docs:       http://localhost:8000/docs"
 echo "   • Health Check:   http://localhost:8000/health"
 echo "   • PostgreSQL:     localhost:5432"
 echo "   • Elasticsearch:  https://localhost:9200"
 echo ""
-echo "🔍 Para ver logs em tempo real:"
+echo " Para ver logs em tempo real:"
 echo "   docker-compose logs -f api"
 echo ""
-echo "🛑 Para parar os serviços:"
+echo " Para parar os serviços:"
 echo "   docker-compose down"
 echo ""

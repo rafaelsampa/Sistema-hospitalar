@@ -14,7 +14,7 @@ from datetime import datetime
 class KafkaEventProducer:
     """
     Producer de eventos para Kafka.
-    Atualmente em modo stub - será conectado ao Kafka real posteriormente.
+    Modo stub - vai ser conectado ao Kafka real
     """
     
     def __init__(self):
@@ -43,18 +43,8 @@ class KafkaEventProducer:
             print(f"[KAFKA EVENT] Data: {json.dumps(event_data, indent=2)}")
             return
         
-        # TODO: Implementar quando Kafka estiver disponível
-        # try:
-        #     self.producer.produce(
-        #         topic,
-        #         key=str(event_data.get('id', '')),
-        #         value=json.dumps(event_data),
-        #         callback=self._delivery_callback
-        #     )
-        #     self.producer.flush()
-        # except Exception as e:
-        #     print(f"[KAFKA ERROR] Falha ao publicar evento: {e}")
-    
+        # TODO: implementacao do kafka
+       
     def _delivery_callback(self, err, msg):
         """Callback de confirmação de entrega"""
         if err:

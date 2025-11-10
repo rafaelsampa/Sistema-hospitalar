@@ -1,9 +1,13 @@
 # app/database.py
+import os
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 
-# Ajuste com seus dados reais
-DATABASE_URL = "postgresql+psycopg2://farmacia_user:senha_forte@localhost:5432/farmacia_prescricao"
+# Usa variável de ambiente ou fallback para localhost (dev)
+DATABASE_URL = os.getenv(
+    "DATABASE_URL",
+    "postgresql+psycopg2://farmacia_user:senha_forte@localhost:5432/farmacia_prescricao"
+)
 
 engine = create_engine(DATABASE_URL, echo=True)
 

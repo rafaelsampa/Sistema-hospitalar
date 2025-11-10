@@ -25,7 +25,7 @@ class Medication(Base):
     dosage_form = Column(String(100), nullable=True)  # comprimido, solução, etc.
     strength = Column(String(100), nullable=True)     # 500 mg, 5 mg/mL etc.
     route = Column(String(50), nullable=True)         # VO, IV, IM, etc.
-    atc_code = Column(String(50), nullable=True)      # código padrão
+    atc_code = Column(String(50), nullable=True)      
     is_active = Column(Boolean, nullable=False, default=True)
 
     # relacionamento com itens de prescrição
@@ -49,7 +49,7 @@ class Prescription(Base):
 
     patient_id = Column(String(100), nullable=False)
     prescriber_id = Column(String(100), nullable=False)  # médico
-    status = Column(String(50), nullable=False, default="DRAFT")  # DRAFT, SIGNED, CANCELLED...
+    status = Column(String(50), nullable=False, default="DRAFT")  #cancelado, finalizado
     notes = Column(Text, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
@@ -109,7 +109,7 @@ class Dispensation(Base):
         nullable=False,
     )
     dispensed_by = Column(String(100), nullable=False)  # id do profissional que dispensou
-    status = Column(String(50), nullable=False, default="PENDING")  # PENDING, COMPLETED, CANCELLED
+    status = Column(String(50), nullable=False, default="PENDING")  
     notes = Column(Text, nullable=True)
 
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)

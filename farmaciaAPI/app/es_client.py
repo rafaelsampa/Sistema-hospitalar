@@ -1,15 +1,10 @@
-# farmaciaAPI/app/es_client.py
-# NOVO ARQUIVO: Lógica de conexão do teste.py
-
 
 import os
 from elasticsearch import Elasticsearch, helpers
 
-# Permite configuração via variáveis de ambiente (ou use valores fixos)
-ELASTIC_HOST = os.getenv("ELASTIC_HOST", "https://localhost:9200")  # HTTPS, não HTTP!
+ELASTIC_HOST = os.getenv("ELASTIC_HOST", "http://localhost:9200") 
 ELASTIC_USER = os.getenv("ELASTIC_USER", "elastic")
 ELASTIC_PASSWORD = os.getenv("ELASTIC_PASSWORD", "vl60PBF8o1qbViYLeAHe")
-# Para desenvolvimento local, desabilitar verificação SSL estrita
 ELASTIC_VERIFY_CERTS = os.getenv("ELASTIC_VERIFY_CERTS", "false").lower() == "true"
 INDEX_NAME = os.getenv("ELASTIC_INDEX", "farmacoteste")
 
@@ -18,39 +13,39 @@ def get_es_client():
         print(f"[ELASTIC] 🔍 Tentando conectar em {ELASTIC_HOST}...")
         print(f"[ELASTIC] 🔍 Usuário: {ELASTIC_USER}")
         
-        # Conecta com HTTPS + autenticação (produção/desenvolvimento com segurança)
+        # conexao com https + autenticação 
         es = Elasticsearch(
             [ELASTIC_HOST],
             basic_auth=(ELASTIC_USER, ELASTIC_PASSWORD),
-            verify_certs=False,  # Desabilita verificação SSL para desenvolvimento
-            ssl_show_warn=False  # Suprime warnings de SSL
+            verify_certs=False,  
+            ssl_show_warn=False  
         )
         
-        print(f"[ELASTIC] 🔍 Cliente criado: {es}")
-        print(f"[ELASTIC] 🔍 Executando ping...")
+        print(f"[ELASTIC]  Cliente criado: {es}")
+        print(f"[ELASTIC]  Executando ping...")
         
         ping_result = es.ping()
-        print(f"[ELASTIC] 🔍 Resultado do ping: {ping_result}")
+        print(f"[ELASTIC]  Resultado do ping: {ping_result}")
         
         if ping_result:
-            print("[ELASTIC] ✅ Conectado ao Elasticsearch com sucesso (HTTPS + autenticação).")
+            print("[ELASTIC] ✅ conectou com Elasticsearch ")
             return es
         else:
             print("[ELASTIC] ❌ Ping retornou False")
             # Tenta info() para ver se é problema do ping()
             try:
                 info = es.info()
-                print(f"[ELASTIC] ✅ Info funcionou! Cluster: {info['cluster_name']}")
+                print(f"[ELASTIC] ✅ AEEEEEEEEEEEEEEEEEEEEEEEEEEEEEEE! Cluster: {info['cluster_name']}")
                 print("[ELASTIC] ⚠️  Ping falhou mas info() funcionou - usando conexão mesmo assim")
                 return es
             except Exception as info_err:
                 print(f"[ELASTIC] ❌ Info também falhou: {info_err}")
-                raise ConnectionError("Falha ao conectar com o Elasticsearch.")
+                raise ConnectionError("conectou nao essa coisa")
         
     except Exception as e:
-        print(f"[ELASTIC] ❌ Erro ao conectar: {type(e).__name__}: {e}")
-        print(f"[ELASTIC] 💡 Dica: Verifique se o Elasticsearch está rodando em {ELASTIC_HOST}")
-        print(f"[ELASTIC] 💡 Teste: curl -k {ELASTIC_HOST} -u {ELASTIC_USER}:***")
+        print(f"[ELASTIC] Erro ao conectar: {type(e).__name__}: {e}")
+        print(f"[ELASTIC]  ta rodando?:{ELASTIC_HOST}")
+        print(f"[ELASTIC] Teste: curl -k {ELASTIC_HOST} -u {ELASTIC_USER}:***")
         import traceback
         traceback.print_exc()
         return None
@@ -85,8 +80,7 @@ def ensure_index():
 
 ensure_index()
 
-# Função auxiliar para re-indexar um medicamento
-# Usaremos o ID do Postgres como ID do Elastic para manter a sincronia
+# ID do Postgres como ID do Elastic para manter a sincronia
 def index_medication(medication_model: dict, medication_id: int):
     if es is None:
         print("⚠️  WARN: Conexão com ES não disponível. Ignorando indexação.")

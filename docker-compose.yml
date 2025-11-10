@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   # ========================================
-  # PostgreSQL - Banco de dados transacional
+  # PostgreSQL 
   # ========================================
   postgres:
     image: postgres:16
@@ -34,14 +34,8 @@ services:
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=true
-      - xpack.security.http.ssl.enabled=true
-      - xpack.security.http.ssl.key=certs/http.key
-      - xpack.security.http.ssl.certificate=certs/http.crt
-      - xpack.security.http.ssl.certificate_authorities=certs/ca.crt
-      - xpack.security.transport.ssl.enabled=true
-      - xpack.security.transport.ssl.key=certs/transport.key
-      - xpack.security.transport.ssl.certificate=certs/transport.crt
-      - xpack.security.transport.ssl.certificate_authorities=certs/ca.crt
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
       - ELASTIC_PASSWORD=vl60PBF8o1qbViYLeAHe
       - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
     ports:
@@ -49,14 +43,14 @@ services:
       - "9300:9300"
     volumes:
       - elasticsearch_data:/usr/share/elasticsearch/data
-      - elasticsearch_certs:/usr/share/elasticsearch/config/certs
     networks:
       - farmacia-network
     healthcheck:
-      test: ["CMD-SHELL", "curl -k -u elastic:vl60PBF8o1qbViYLeAHe https://localhost:9200/_cluster/health || exit 1"]
+      test: ["CMD-SHELL", "curl -u elastic:vl60PBF8o1qbViYLeAHe http://localhost:9200/_cluster/health || exit 1"]
       interval: 30s
       timeout: 10s
       retries: 5
+      start_period: 40s
 
   # ========================================
   # API FastAPI - Microserviço Principal
@@ -72,7 +66,7 @@ services:
       DATABASE_URL: postgresql+psycopg2://farmacia_user:senha_forte@postgres:5432/farmacia_prescricao
       
       # Elasticsearch
-      ELASTIC_HOST: https://elasticsearch:9200
+      ELASTIC_HOST: http://elasticsearch:9200
       ELASTIC_USER: elastic
       ELASTIC_PASSWORD: vl60PBF8o1qbViYLeAHe
       ELASTIC_INDEX: farmacoteste
@@ -103,7 +97,7 @@ services:
 
   # ========================================
   # Kafka (OPCIONAL - fornecido por terceiros)
-  # Descomente quando o Kafka real for fornecido
+  # o
   # ========================================
   # zookeeper:
   #   image: confluentinc/cp-zookeeper:7.5.0
@@ -140,8 +134,6 @@ volumes:
   postgres_data:
     driver: local
   elasticsearch_data:
-    driver: local
-  elasticsearch_certs:
     driver: local
 
 # ========================================
