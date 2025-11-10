@@ -1,0 +1,152 @@
+version: "3.9"
+
+services:
+  # ========================================
+  # PostgreSQL - Banco de dados transacional
+  # ========================================
+  postgres:
+    image: postgres:16
+    container_name: farmacia-postgres
+    restart: always
+    environment:
+      POSTGRES_USER: farmacia_user
+      POSTGRES_PASSWORD: senha_forte
+      POSTGRES_DB: farmacia_prescricao
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - farmacia-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U farmacia_user -d farmacia_prescricao"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ========================================
+  # Elasticsearch - Busca de medicamentos
+  # ========================================
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.4
+    container_name: farmacia-elasticsearch
+    restart: always
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=true
+      - xpack.security.http.ssl.key=certs/http.key
+      - xpack.security.http.ssl.certificate=certs/http.crt
+      - xpack.security.http.ssl.certificate_authorities=certs/ca.crt
+      - xpack.security.transport.ssl.enabled=true
+      - xpack.security.transport.ssl.key=certs/transport.key
+      - xpack.security.transport.ssl.certificate=certs/transport.crt
+      - xpack.security.transport.ssl.certificate_authorities=certs/ca.crt
+      - ELASTIC_PASSWORD=vl60PBF8o1qbViYLeAHe
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+      - "9300:9300"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+      - elasticsearch_certs:/usr/share/elasticsearch/config/certs
+    networks:
+      - farmacia-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -k -u elastic:vl60PBF8o1qbViYLeAHe https://localhost:9200/_cluster/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+
+  # ========================================
+  # API FastAPI - Microserviço Principal
+  # ========================================
+  api:
+    build:
+      context: ./farmaciaAPI
+      dockerfile: Dockerfile
+    container_name: farmacia-api
+    restart: always
+    environment:
+      # Database
+      DATABASE_URL: postgresql+psycopg2://farmacia_user:senha_forte@postgres:5432/farmacia_prescricao
+      
+      # Elasticsearch
+      ELASTIC_HOST: https://elasticsearch:9200
+      ELASTIC_USER: elastic
+      ELASTIC_PASSWORD: vl60PBF8o1qbViYLeAHe
+      ELASTIC_INDEX: farmacoteste
+      ELASTIC_VERIFY_CERTS: "false"
+      
+      # Kafka (quando fornecido por terceiros, atualizar aqui)
+      KAFKA_BOOTSTRAP_SERVERS: kafka:9092
+      KAFKA_CLIENT_ID: farmacia-service
+      
+      # Configurações da aplicação
+      LOG_LEVEL: INFO
+      WORKERS: 4
+    ports:
+      - "8000:8000"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - farmacia-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # ========================================
+  # Kafka (OPCIONAL - fornecido por terceiros)
+  # Descomente quando o Kafka real for fornecido
+  # ========================================
+  # zookeeper:
+  #   image: confluentinc/cp-zookeeper:7.5.0
+  #   container_name: farmacia-zookeeper
+  #   restart: always
+  #   environment:
+  #     ZOOKEEPER_CLIENT_PORT: 2181
+  #     ZOOKEEPER_TICK_TIME: 2000
+  #   networks:
+  #     - farmacia-network
+  
+  # kafka:
+  #   image: confluentinc/cp-kafka:7.5.0
+  #   container_name: farmacia-kafka
+  #   restart: always
+  #   depends_on:
+  #     - zookeeper
+  #   ports:
+  #     - "9092:9092"
+  #   environment:
+  #     KAFKA_BROKER_ID: 1
+  #     KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+  #     KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+  #     KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+  #     KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+  #     KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+  #   networks:
+  #     - farmacia-network
+
+# ========================================
+# Volumes para persistência de dados
+# ========================================
+volumes:
+  postgres_data:
+    driver: local
+  elasticsearch_data:
+    driver: local
+  elasticsearch_certs:
+    driver: local
+
+# ========================================
+# Rede interna para comunicação entre serviços
+# ========================================
+networks:
+  farmacia-network:
+    driver: bridge

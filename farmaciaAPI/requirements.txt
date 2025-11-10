@@ -1,0 +1,27 @@
+# Microserviço Farmácia & Prescrição - Requirements
+
+# Framework Web
+fastapi==0.121.1
+uvicorn[standard]==0.38.0
+
+# Banco de Dados
+sqlalchemy==2.0.44
+psycopg2-binary==2.9.11
+
+# Elasticsearch (versão 8.x compatível com ES 8.13.4)
+elasticsearch==8.13.0
+elastic-transport==8.13.0
+
+# Kafka (para quando for integrado)
+confluent-kafka==2.12.2
+
+# Utilitários
+python-dateutil==2.9.0
+pydantic==2.12.4
+pydantic-core==2.41.5
+
+# HTTP Client (para integração com outros serviços)
+httpx==0.27.0
+
+# Variáveis de ambiente
+python-dotenv==1.0.0

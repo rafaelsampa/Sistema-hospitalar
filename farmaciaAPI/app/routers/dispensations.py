@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 
 from .. import models, schemas
 from ..database import get_db
+from ..kafka_producer import kafka_producer
 
 router = APIRouter(
     prefix="/dispensations",
@@ -84,11 +85,21 @@ def create_dispensation(
     db.commit()
     db.refresh(db_disp)
 
-    # Aqui seria o ponto de publicar o evento MedicationDispensed
-    print(
-        f"[EVENT] MedicationDispensed -> dispensation_id={db_disp.id}, "
-        f"prescription_id={db_disp.prescription_id}, items={len(db_disp.items)}"
-    )
+    # EVENTO KAFKA: Publica evento MedicationDispensed
+    kafka_producer.publish_medication_dispensed({
+        'id': db_disp.id,
+        'prescription_id': db_disp.prescription_id,
+        'dispensed_by': db_disp.dispensed_by,
+        'status': db_disp.status,
+        'items': [
+            {
+                'medication_id': item.medication_id,
+                'quantity_dispensed': item.quantity_dispensed,
+                'prescription_item_id': item.prescription_item_id
+            }
+            for item in db_disp.items
+        ]
+    })
 
     return db_disp
 

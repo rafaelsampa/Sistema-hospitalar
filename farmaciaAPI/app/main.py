@@ -14,6 +14,23 @@ app = FastAPI(
 )
 
 
+@app.get("/", tags=["root"])
+def root():
+    """Endpoint raiz com informações básicas do serviço"""
+    return {
+        "service": "Farmácia & Prescrição",
+        "version": "0.1.0",
+        "status": "running",
+        "endpoints": {
+            "health": "/health",
+            "docs": "/docs",
+            "medications": "/medications",
+            "prescriptions": "/prescriptions",
+            "dispensations": "/dispensations"
+        }
+    }
+
+
 @app.get("/health", tags=["health"])
 def health_check():
     # NOVO: Verifica também a saúde do ES
